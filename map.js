@@ -328,3 +328,11 @@ setTimeout(() => {
         });
     }
 }, 1000);
+
+// --- 9. DISTRICT LIST TOGGLE (MOBILE) ---
+const districtLabel = document.getElementById('district-label');
+const sidebar = document.getElementById('sidebar');
+
+districtLabel.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed-districts');
+});
