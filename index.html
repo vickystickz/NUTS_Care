@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vulnerability Dashboard NUTS-CARE</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.4.0/ol.css" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="top-header">
+        <h1>Vulnerability Dashboard <span style="font-weight:300; opacity:0.8;">NUTS-CARE</span>
+<span style="display:block; font-size:0.4em; opacity:0.6; font-weight:normal; margin-top:2px;">by Ee Faye, Victor and Florian</span></h1>
+    </div>
+
+    <div id="main-container">
+        
+        <div id="sidebar">
+            <div id="stats-container">
+                <div class="stat-card card-blue">
+                    <div class="stat-icon user-icon"><i class="fa-solid fa-user-group"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-val" id="count-people">...</span>
+                        <span class="stat-label">People 60+</span>
+                    </div>
+                </div>
+                <div class="stat-card card-red">
+                    <div class="stat-icon hospital-icon"><i class="fa-solid fa-house-medical"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-val" id="count-hospitals">...</span>
+                        <span class="stat-label">Clinics</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="district-label">
+                <i class="fa-solid fa-list-ul" style="margin-right:8px; color:#00695c;"></i> District List
+            </div>
+            <div id="district-list-container">
+                <div style="padding:20px; color:#666; text-align:center;">Loading data...</div>
+            </div>
+        </div>
+
+        <div id="map">
+            
+            <div id="layer-switcher" class="collapsed">
+                <div id="layer-switcher-header">
+                    <div>
+                        <i class="fa-solid fa-layer-group"></i> <span style="margin-left:8px;">Data Layers</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" id="layer-arrow"></i>
+                </div>
+                <div id="layer-switcher-content">
+                    <label><input type="checkbox" name="viz" value="total" class="viz-cb" checked> <span>Normalized (Total)</span></label>
+                    <label><input type="checkbox" name="viz" value="female" class="viz-cb"> <span>Normalized (Female)</span></label>
+                    <label><input type="checkbox" name="viz" value="male" class="viz-cb"> <span>Normalized (Male)</span></label>
+                    <hr>
+                    <label><input type="checkbox" id="check-hospitals" checked> <span><strong>Show Hospitals</strong></span></label>
+                </div>
+            </div>
+
+            <div id="legend">
+                <strong>Vulnerability Index</strong>
+                <div class="legend-gradient"></div>
+                <div class="legend-labels">
+                    <span>Low</span>
+                    <span>High</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="popup" class="ol-popup">
+        <a href="#" id="popup-closer" class="ol-popup-closer"><i class="fa-solid fa-xmark"></i></a>
+        <div id="popup-content"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
+    <script src="map.js"></script>
+</body>
+</html>
