@@ -6,9 +6,9 @@ const layerPolygons = 'ipsdi_wt25:household_status_60plus_by_region';
 const layerHospitals = 'ipsdi_wt25:hospitals_AT';
 
 const myStyles = {
-    total:    'ipsdi_wt25:group6_style_normalized_t',
-    female:   'ipsdi_wt25:group6_style_normalized_f',
-    male:     'ipsdi_wt25:group6_style_normalized_m'
+    total: 'ipsdi_wt25:group6_style_normalized_t',
+    female: 'ipsdi_wt25:group6_style_normalized_f',
+    male: 'ipsdi_wt25:group6_style_normalized_m'
 };
 
 // Global variables for total counts
@@ -23,11 +23,11 @@ function fixText(str) {
 // Function to reset stats to global totals
 function resetStats() {
     const peopleEl = document.getElementById('count-people');
-    if(peopleEl) peopleEl.innerText = globalTotal60Plus.toLocaleString('en-US');
-    
+    if (peopleEl) peopleEl.innerText = globalTotal60Plus.toLocaleString('en-US');
+
     const hospitalEl = document.getElementById('count-hospitals');
-    if(hospitalEl) hospitalEl.innerText = globalTotalHospitals.toLocaleString('en-US');
-    
+    if (hospitalEl) hospitalEl.innerText = globalTotalHospitals.toLocaleString('en-US');
+
     // Clear list highlight
     document.querySelectorAll('.district-item').forEach(el => el.classList.remove('active'));
 }
@@ -35,10 +35,10 @@ function resetStats() {
 // Helper to highlight list item
 function highlightListItem(districtName) {
     document.querySelectorAll('.district-item').forEach(el => el.classList.remove('active'));
-    
+
     const cleanId = 'district-' + districtName.replace(/\s+/g, '-').toLowerCase();
     const item = document.getElementById(cleanId);
-    if(item) {
+    if (item) {
         item.classList.add('active');
         item.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
@@ -65,22 +65,51 @@ const lMale = createWmsLayer(myStyles.male, false);
 // Hospitals (Vector)
 const hospitalSource = new ol.source.Vector({
     format: new ol.format.GeoJSON(),
-    url: function(extent) {
-        return wfsUrlBase + '?service=WFS&version=1.1.0&request=GetFeature&typeName=' + 
-               layerHospitals + '&outputFormat=application/json&srsName=EPSG:3857';
+    url: function (extent) {
+        return wfsUrlBase + '?service=WFS&version=1.1.0&request=GetFeature&typeName=' +
+            layerHospitals + '&outputFormat=application/json&srsName=EPSG:3857';
     }
 });
-const hospitalLayer = new ol.layer.Vector({
-    source: hospitalSource,
-    visible: true,
-    zIndex: 2000, 
-    style: new ol.style.Style({
-        image: new ol.style.Circle({
-            radius: 7, 
-            fill: new ol.style.Fill({ color: '#e74c3c' }), 
-            stroke: new ol.style.Stroke({ color: '#ffffff', width: 2 })
-        })
+
+const clusterSource = new ol.source.Cluster({
+    distance: 40,
+    minDistance: 70,
+    source: hospitalSource
+});
+
+
+const iconStyle = new ol.style.Style({
+    image: new ol.style.Icon({
+        src: 'hospital.svg',
+        scale: 0.5,
+        anchor: [0.5, 0.5]
     })
+});
+
+const hospitalLayer = new ol.layer.Vector({
+    source: clusterSource,
+    zIndex: 2000,
+    style: function (feature) {
+        const size = feature.get('features').length;
+
+        if (size > 1) {
+            return new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: 14,
+                    stroke: new ol.style.Stroke({ color: '#fff', width: 2 }),
+                    fill: new ol.style.Fill({ color: '#36454F' })
+                }),
+                text: new ol.style.Text({
+                    text: size.toString(),
+                    fill: new ol.style.Fill({ color: '#fff' }),
+                    fontWeight: 'bold',
+                    size: '12px'
+                })
+            });
+        } else {
+            return iconStyle;
+        }
+    }
 });
 
 // Highlight
@@ -89,7 +118,7 @@ const highlightLayer = new ol.layer.Vector({
     source: highlightSource,
     zIndex: 1000,
     style: new ol.style.Style({
-        stroke: new ol.style.Stroke({ color: '#f1c40f', width: 4 }), 
+        stroke: new ol.style.Stroke({ color: '#f1c40f', width: 4 }),
         fill: new ol.style.Fill({ color: 'rgba(255, 255, 0, 0)' }),
         image: new ol.style.Circle({ radius: 9, fill: new ol.style.Fill({ color: '#f1c40f' }) })
     })
@@ -101,7 +130,7 @@ const content = document.getElementById('popup-content');
 const closer = document.getElementById('popup-closer');
 const overlay = new ol.Overlay({ element: container, autoPan: { animation: { duration: 250 } } });
 
-closer.onclick = function() {
+closer.onclick = function () {
     overlay.setPosition(undefined);
     highlightSource.clear();
     resetStats();
@@ -120,7 +149,7 @@ const map = new ol.Map({
     controls: ol.control.defaults.defaults().extend([
         new ol.control.ZoomToExtent({
             extent: [750000, 5750000, 2250000, 6250000],
-            label: document.createRange().createContextualFragment('<i class="fa-solid fa-house"></i>'), 
+            label: document.createRange().createContextualFragment('<i class="fa-solid fa-house"></i>'),
             tipLabel: 'Home'
         }),
         new ol.control.ScaleLine({
@@ -140,31 +169,31 @@ function showPopupAndHighlight(properties, geometry, coordinate) {
 
     const safeName = fixText(properties.name || 'Unnamed');
     let html = '';
-    
+
     // CASE A: Hospital Popup
     if (properties.hasOwnProperty('code') || geometry.getType() === 'Point') {
         html += `<div style="color:#e74c3c; font-weight:700; margin-bottom:8px; font-size:1.1em;"><i class="fa-solid fa-hospital"></i> Clinic</div>`;
-        html += `<div style="font-size:1.2em; font-weight:600; margin-bottom:5px;">${safeName}</div>`; 
+        html += `<div style="font-size:1.2em; font-weight:600; margin-bottom:5px;">${safeName}</div>`;
     } else {
         // CASE B: Region Popup
         html += `<div style="font-weight:700; margin-bottom:10px; font-size:1.3em; color:#00695c;">${safeName}</div>`;
-        
+
         highlightListItem(safeName);
 
         // --- NEW LOGIC: Dynamic Sentence & Sidebar Update ---
-        
+
         // 1. Sidebar Stats Update
-        if(properties.total_above60 !== undefined) {
+        if (properties.total_above60 !== undefined) {
             document.getElementById('count-people').innerText = properties.total_above60.toLocaleString('en-US');
         }
-        if(properties.hospitals_in_region !== undefined) {
+        if (properties.hospitals_in_region !== undefined) {
             document.getElementById('count-hospitals').innerText = properties.hospitals_in_region.toLocaleString('en-US');
         }
 
         // 2. Dynamic Sentence in Popup
-        if(properties.total_total) {
-             const hospitalsCount = properties.hospitals_in_region || 0;
-             html += `<div style="margin-bottom:12px; color:#555; line-height:1.4; font-size:0.95em; border-bottom:1px solid #eee; padding-bottom:8px;">
+        if (properties.total_total) {
+            const hospitalsCount = properties.hospitals_in_region || 0;
+            html += `<div style="margin-bottom:12px; color:#555; line-height:1.4; font-size:0.95em; border-bottom:1px solid #eee; padding-bottom:8px;">
                 <strong style="color:#2c3e50;">${properties.total_total.toLocaleString('en-US')}</strong> 
                 people are living in this NUTS region and are likely to use one out of 
                 <strong style="color:#e74c3c;">${hospitalsCount}</strong> hospitals.
@@ -173,17 +202,17 @@ function showPopupAndHighlight(properties, geometry, coordinate) {
 
         html += `<table class="popup-table">`;
         const fmt = (val) => (typeof val === 'number') ? val.toFixed(2) : val;
-        
-        if(properties.normalized_f !== undefined) html += `<tr><td class="popup-key">Index (Female):</td><td class="popup-val">${fmt(properties.normalized_f)}</td></tr>`;
-        if(properties.normalized_m !== undefined) html += `<tr><td class="popup-key">Index (Male):</td><td class="popup-val">${fmt(properties.normalized_m)}</td></tr>`;
-        
-        if(properties['notinnucleus_ above60_m'] !== undefined) {
-             html += `<tr><td class="popup-key">above 60 - living alone:</td><td class="popup-val">${properties['notinnucleus_ above60_m']}</td></tr>`;
+
+        if (properties.normalized_f !== undefined) html += `<tr><td class="popup-key">Index (Female):</td><td class="popup-val">${fmt(properties.normalized_f)}</td></tr>`;
+        if (properties.normalized_m !== undefined) html += `<tr><td class="popup-key">Index (Male):</td><td class="popup-val">${fmt(properties.normalized_m)}</td></tr>`;
+
+        if (properties['notinnucleus_ above60_m'] !== undefined) {
+            html += `<tr><td class="popup-key">above 60 - living alone:</td><td class="popup-val">${properties['notinnucleus_ above60_m']}</td></tr>`;
         }
 
         // Removed redundant stats from table since they are in sidebar/text
-        
-        if(properties.average_travel_time !== undefined) html += `<tr><td class="popup-key">Travel Time:</td><td class="popup-val">${fmt(properties.average_travel_time)} min</td></tr>`;
+
+        if (properties.average_travel_time !== undefined) html += `<tr><td class="popup-key">Travel Time:</td><td class="popup-val">${fmt(properties.average_travel_time)} min</td></tr>`;
         html += `</table>`;
     }
     content.innerHTML = html;
@@ -193,7 +222,7 @@ function showPopupAndHighlight(properties, geometry, coordinate) {
 // --- 5. INTERACTION ---
 
 // 5a. Pointer Move
-map.on('pointermove', function(e) {
+map.on('pointermove', function (e) {
     const pixel = map.getEventPixel(e.originalEvent);
     const hit = map.hasFeatureAtPixel(pixel, {
         layerFilter: (l) => l === hospitalLayer
@@ -201,18 +230,35 @@ map.on('pointermove', function(e) {
     map.getTargetElement().style.cursor = hit ? 'pointer' : '';
 });
 
-// 5b. Click
-map.on('singleclick', function(evt) {
-    const feature = map.forEachFeatureAtPixel(evt.pixel, function(feat, layer) {
-        if (layer === highlightLayer) return null; 
-        return feat; 
+map.on('singleclick', function (evt) {
+    const feature = map.forEachFeatureAtPixel(evt.pixel, function (feat, layer) {
+        if (layer === highlightLayer) return null;
+        return feat;
     });
-    
+
     if (feature) {
-        const props = feature.getProperties();
-        const geom = feature.getGeometry();
-        if(props.normalized_f === undefined && props.code === undefined && props.name === undefined) return; 
+        let targetFeature = feature;
+        const clusteredFeatures = feature.get('features');
+
+        if (clusteredFeatures) {
+            if (clusteredFeatures.length > 1) {
+                const extent = ol.extent.createEmpty();
+                clusteredFeatures.forEach(f => ol.extent.extend(extent, f.getGeometry().getExtent()));
+                map.getView().fit(extent, { duration: 500, padding: [600, 500, 600, 350] });
+                return;
+            } else {
+                targetFeature = clusteredFeatures[0];
+            }
+        }
+        const props = targetFeature.getProperties();
+        const geom = targetFeature.getGeometry();
+
+        console.log('Hospital Properties:', props);
+
+        if (props.normalized_f === undefined && props.code === undefined && props.name === undefined) return;
+
         showPopupAndHighlight(props, geom, evt.coordinate);
+
     } else {
         let source = null;
         if (lFemale.getVisible()) source = lFemale.getSource();
@@ -222,7 +268,7 @@ map.on('singleclick', function(evt) {
         if (source) {
             const url = source.getFeatureInfoUrl(
                 evt.coordinate, map.getView().getResolution(), 'EPSG:3857',
-                { 'INFO_FORMAT': 'application/json' } 
+                { 'INFO_FORMAT': 'application/json' }
             );
             if (url) {
                 fetch(url).then(res => res.json()).then(data => {
@@ -243,34 +289,34 @@ map.on('singleclick', function(evt) {
 
 // --- 6. DATA & STATS ---
 const listContainer = document.getElementById('district-list-container');
-const wfsUrlPolygons = wfsUrlBase + '?service=WFS&version=1.1.0&request=GetFeature&typeName=' + 
-               layerPolygons + '&outputFormat=application/json&srsName=EPSG:3857';
+const wfsUrlPolygons = wfsUrlBase + '?service=WFS&version=1.1.0&request=GetFeature&typeName=' +
+    layerPolygons + '&outputFormat=application/json&srsName=EPSG:3857';
 
 fetch(wfsUrlPolygons)
     .then(res => res.json())
     .then(data => {
-        listContainer.innerHTML = ''; 
+        listContainer.innerHTML = '';
         const features = data.features;
-        
+
         let total60plus = 0;
         // Reset count for safety
         globalTotalHospitals = 0;
 
         features.forEach(f => {
-            if(f.properties.total_above60) total60plus += f.properties.total_above60;
+            if (f.properties.total_above60) total60plus += f.properties.total_above60;
         });
-        
+
         globalTotal60Plus = total60plus;
         document.getElementById('count-people').innerText = total60plus.toLocaleString('en-US');
-        
-        features.sort((a,b) => fixText(a.properties.name || "").localeCompare(fixText(b.properties.name || "")));
+
+        features.sort((a, b) => fixText(a.properties.name || "").localeCompare(fixText(b.properties.name || "")));
 
         features.forEach(f => {
             const safeName = fixText(f.properties.name || "District");
             const item = document.createElement('div');
             item.className = 'district-item';
             item.innerText = safeName;
-            
+
             const cleanId = 'district-' + safeName.replace(/\s+/g, '-').toLowerCase();
             item.id = cleanId;
 
@@ -278,6 +324,7 @@ fetch(wfsUrlPolygons)
                 const geom = new ol.format.GeoJSON().readGeometry(f.geometry);
                 map.getView().fit(geom, { padding: [100, 500, 100, 350], duration: 1000 });
                 showPopupAndHighlight(f.properties, geom, ol.extent.getCenter(geom.getExtent()));
+                clearSearch();
             });
             listContainer.appendChild(item);
         });
@@ -285,7 +332,7 @@ fetch(wfsUrlPolygons)
     .catch(err => listContainer.innerHTML = 'Error loading data.');
 
 // COUNT GLOBAL HOSPITALS (ONCE)
-hospitalSource.once('change', function() {
+hospitalSource.once('change', function () {
     if (hospitalSource.getState() === 'ready') {
         const count = hospitalSource.getFeatures().length;
         globalTotalHospitals = count;
@@ -298,11 +345,11 @@ const boxes = document.querySelectorAll('.viz-cb');
 const layerMap = { 'total': lTotal, 'female': lFemale, 'male': lMale };
 
 function updateLayers() {
-    boxes.forEach(b => { if(layerMap[b.value]) layerMap[b.value].setVisible(b.checked); });
+    boxes.forEach(b => { if (layerMap[b.value]) layerMap[b.value].setVisible(b.checked); });
 }
 boxes.forEach(box => {
-    box.addEventListener('change', function() {
-        if(this.checked) boxes.forEach(other => { if(other !== this) other.checked = false; });
+    box.addEventListener('change', function () {
+        if (this.checked) boxes.forEach(other => { if (other !== this) other.checked = false; });
         updateLayers();
     });
 });
@@ -320,7 +367,7 @@ switcherHeader.addEventListener('click', () => {
 
 setTimeout(() => {
     const homeBtn = document.querySelector('.ol-zoom-extent button');
-    if(homeBtn) {
+    if (homeBtn) {
         homeBtn.addEventListener('click', () => {
             overlay.setPosition(undefined);
             highlightSource.clear();
@@ -336,3 +383,29 @@ const sidebar = document.getElementById('sidebar');
 districtLabel.addEventListener('click', () => {
     sidebar.classList.toggle('collapsed-districts');
 });
+
+// --- 10. SEARCH FUNCTIONALITY ---
+const searchInput = document.getElementById('district-search');
+
+searchInput.addEventListener('input', function () {
+    const searchTerm = this.value.toLowerCase().trim();
+    const districtItems = document.querySelectorAll('.district-item');
+
+    districtItems.forEach(item => {
+        const districtName = item.innerText.toLowerCase();
+        if (districtName.includes(searchTerm)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+});
+
+// Clear search when a district is clicked
+function clearSearch() {
+    searchInput.value = '';
+    const districtItems = document.querySelectorAll('.district-item');
+    districtItems.forEach(item => {
+        item.style.display = 'block';
+    });
+}

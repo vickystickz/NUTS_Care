@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,15 +9,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
     <div id="top-header">
         <h1>Vulnerability Dashboard <span style="font-weight:300; opacity:0.8;">NUTS-CARE</span>
-<span style="display:block; font-size:0.4em; opacity:0.6; font-weight:normal; margin-top:2px;">by Ee Faye, Victor and Florian</span></h1>
+            <span style="display:block; font-size:0.4em; opacity:0.6; font-weight:normal; margin-top:2px;">by Ee Faye,
+                Victor and Florian</span>
+        </h1>
     </div>
 
     <div id="main-container">
-        
+
         <div id="sidebar">
             <div id="stats-container">
                 <div class="stat-card card-blue">
@@ -47,7 +51,7 @@
         </div>
 
         <div id="map">
-            
+
             <div id="layer-switcher" class="collapsed">
                 <div id="layer-switcher-header">
                     <div>
@@ -56,11 +60,15 @@
                     <i class="fa-solid fa-chevron-down" id="layer-arrow"></i>
                 </div>
                 <div id="layer-switcher-content">
-                    <label><input type="checkbox" name="viz" value="total" class="viz-cb" checked> <span>Normalized (Total)</span></label>
-                    <label><input type="checkbox" name="viz" value="female" class="viz-cb"> <span>Normalized (Female)</span></label>
-                    <label><input type="checkbox" name="viz" value="male" class="viz-cb"> <span>Normalized (Male)</span></label>
+                    <label><input type="checkbox" name="viz" value="total" class="viz-cb" checked> <span>Normalized
+                            (Total)</span></label>
+                    <label><input type="checkbox" name="viz" value="female" class="viz-cb"> <span>Normalized
+                            (Female)</span></label>
+                    <label><input type="checkbox" name="viz" value="male" class="viz-cb"> <span>Normalized
+                            (Male)</span></label>
                     <hr>
-                    <label><input type="checkbox" id="check-hospitals" checked> <span><strong>Show Hospitals</strong></span></label>
+                    <label><input type="checkbox" id="check-hospitals" checked> <span><strong>Show
+                                Hospitals</strong></span></label>
                 </div>
             </div>
 
@@ -83,4 +91,5 @@
     <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
     <script src="map.js"></script>
 </body>
+
 </html>

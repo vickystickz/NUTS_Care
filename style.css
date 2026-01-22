@@ -69,6 +69,41 @@ body {
 .stat-val { display: block; font-size: 1.2rem; font-weight: 700; color: #2c3e50; }
 .stat-label { font-size: 0.7rem; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
 
+/* Search Bar */
+#search-container {
+    padding: 15px 20px;
+    background: #ffffff;
+    border-bottom: 1px solid #f0f0f0;
+    position: relative;
+}
+#district-search {
+    width: 100%;
+    padding: 10px 40px 10px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #333;
+    transition: all 0.2s ease;
+    outline: none;
+    background-color: #f8f9fa;
+}
+#district-search:focus {
+    border-color: #00695c;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(0, 105, 92, 0.1);
+}
+#district-search::placeholder {
+    color: #999;
+}
+#search-icon {
+    position: absolute;
+    right: 35px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #7f8c8d;
+    pointer-events: none;
+}
+
 /* District List */
 #district-label { 
     padding: 15px 25px; background: #ffffff; border-bottom: 1px solid #f0f0f0; 
@@ -169,7 +204,7 @@ body {
 
 /* --- LEGEND --- */
 #legend {
-    position: absolute; bottom: 30px; right: 20px;
+    position: absolute; bottom: 90px; right: 20px;
     background: rgba(255, 255, 255, 0.95); padding: 15px;
     border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     width: 170px; font-size: 0.8rem; z-index: 99;
@@ -251,6 +286,18 @@ hr { border: 0; border-top: 1px solid #eee; margin: 15px 0; }
     }
     .stat-label {
         font-size: 0.65rem;
+    }
+
+    /* Search bar mobile */
+    #search-container {
+        padding: 12px 15px;
+    }
+    #district-search {
+        padding: 8px 35px 8px 12px;
+        font-size: 0.85rem;
+    }
+    #search-icon {
+        right: 28px;
     }
 
     /* District list scrollable */
@@ -364,6 +411,19 @@ hr { border: 0; border-top: 1px solid #eee; margin: 15px 0; }
         max-height: 40vh;
     }
 
+    /* Search bar compact */
+    #search-container {
+        padding: 10px 12px;
+    }
+    #district-search {
+        padding: 7px 32px 7px 10px;
+        font-size: 0.8rem;
+    }
+    #search-icon {
+        right: 24px;
+        font-size: 0.9rem;
+    }
+
     /* Stats cards stack vertically on very small screens */
     #stats-container {
         flex-direction: column;
@@ -417,7 +477,7 @@ hr { border: 0; border-top: 1px solid #eee; margin: 15px 0; }
 
     /* Legend compact */
     #legend {
-        bottom: 15px;
+        bottom: 70px;
         right: 8px;
         padding: 10px;
         width: 120px;
