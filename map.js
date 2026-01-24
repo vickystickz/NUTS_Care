@@ -31,7 +31,6 @@ function resetStats() {
     // Clear list highlight
     document.querySelectorAll('.district-item').forEach(el => el.classList.remove('active'));
 }
-
 // Helper to highlight list item
 function highlightListItem(districtName) {
     document.querySelectorAll('.district-item').forEach(el => el.classList.remove('active'));
@@ -72,7 +71,7 @@ const hospitalSource = new ol.source.Vector({
 });
 
 const clusterSource = new ol.source.Cluster({
-    distance: 40,
+    distance: 35,
     minDistance: 70,
     source: hospitalSource
 });
@@ -80,8 +79,8 @@ const clusterSource = new ol.source.Cluster({
 
 const iconStyle = new ol.style.Style({
     image: new ol.style.Icon({
-        src: 'hospital.svg',
-        scale: 0.5,
+        src: 'hospital_pin.svg',
+        scale: 1,
         anchor: [0.5, 0.5]
     })
 });
@@ -95,9 +94,8 @@ const hospitalLayer = new ol.layer.Vector({
         if (size > 1) {
             return new ol.style.Style({
                 image: new ol.style.Circle({
-                    radius: 14,
-                    stroke: new ol.style.Stroke({ color: '#fff', width: 2 }),
-                    fill: new ol.style.Fill({ color: '#36454F' })
+                    radius: size * 0.60 + 12,
+                    fill: new ol.style.Fill({ color: '#436b6b', })
                 }),
                 text: new ol.style.Text({
                     text: size.toString(),
@@ -133,7 +131,13 @@ const overlay = new ol.Overlay({ element: container, autoPan: { animation: { dur
 closer.onclick = function () {
     overlay.setPosition(undefined);
     highlightSource.clear();
-    resetStats();
+    if (document.querySelector('.district-item.active')) {
+        document.querySelector('.district-item.active').classList.remove('active');
+        updateVisibleCount();
+    } else {
+        resetStats();
+    }
+
     closer.blur();
     return false;
 };
@@ -144,7 +148,7 @@ const map = new ol.Map({
     overlays: [overlay],
     view: new ol.View({
         center: ol.proj.fromLonLat([13.3, 47.7]),
-        zoom: 7
+        zoom: 8
     }),
     controls: ol.control.defaults.defaults().extend([
         new ol.control.ZoomToExtent({
@@ -220,8 +224,6 @@ function showPopupAndHighlight(properties, geometry, coordinate) {
 }
 
 // --- 5. INTERACTION ---
-
-// 5a. Pointer Move
 map.on('pointermove', function (e) {
     const pixel = map.getEventPixel(e.originalEvent);
     const hit = map.hasFeatureAtPixel(pixel, {
@@ -244,7 +246,7 @@ map.on('singleclick', function (evt) {
             if (clusteredFeatures.length > 1) {
                 const extent = ol.extent.createEmpty();
                 clusteredFeatures.forEach(f => ol.extent.extend(extent, f.getGeometry().getExtent()));
-                map.getView().fit(extent, { duration: 500, padding: [600, 500, 600, 350] });
+                map.getView().fit(extent, { padding: [100, 500, 100, 350], duration: 1000 });
                 return;
             } else {
                 targetFeature = clusteredFeatures[0];
@@ -252,8 +254,6 @@ map.on('singleclick', function (evt) {
         }
         const props = targetFeature.getProperties();
         const geom = targetFeature.getGeometry();
-
-        console.log('Hospital Properties:', props);
 
         if (props.normalized_f === undefined && props.code === undefined && props.name === undefined) return;
 
@@ -287,6 +287,8 @@ map.on('singleclick', function (evt) {
     }
 });
 
+var peopleFeature = null
+
 // --- 6. DATA & STATS ---
 const listContainer = document.getElementById('district-list-container');
 const wfsUrlPolygons = wfsUrlBase + '?service=WFS&version=1.1.0&request=GetFeature&typeName=' +
@@ -306,11 +308,69 @@ fetch(wfsUrlPolygons)
             if (f.properties.total_above60) total60plus += f.properties.total_above60;
         });
 
+        peopleFeature = features;
         globalTotal60Plus = total60plus;
         document.getElementById('count-people').innerText = total60plus.toLocaleString('en-US');
 
+        const count = hospitalSource.getFeatures().length;
+        globalTotalHospitals = count;
+        document.getElementById('count-hospitals').innerText = count.toLocaleString('en-US');
+
         features.sort((a, b) => fixText(a.properties.name || "").localeCompare(fixText(b.properties.name || "")));
 
+        // Create search bar container
+        const searchContainer = document.createElement('div');
+        searchContainer.className = 'search-container';
+
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.placeholder = 'Search districts...';
+        searchInput.className = 'district-search';
+
+        searchContainer.appendChild(searchInput);
+        listContainer.parentElement.insertBefore(searchContainer, listContainer);
+
+        // Add search functionality
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const items = listContainer.querySelectorAll('.district-item');
+
+            if (items.length === 0) {
+                return;
+            }
+
+            let visibleCount = 0;
+
+            items.forEach(item => {
+                const districtName = item.innerText.toLowerCase();
+                if (districtName.includes(searchTerm)) {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Handle no results message
+            let noResultsMsg = listContainer.querySelector('.no-results-message');
+
+            if (visibleCount === 0 && searchTerm !== '') {
+                if (!noResultsMsg) {
+                    noResultsMsg = document.createElement('div');
+                    noResultsMsg.className = 'no-results-message';
+                    noResultsMsg.style.cssText = 'padding: 20px; text-align: center; color: #666; font-style: italic;';
+                    noResultsMsg.innerText = 'District not found';
+                    listContainer.appendChild(noResultsMsg);
+                }
+                noResultsMsg.style.display = 'block';
+            } else {
+                if (noResultsMsg) {
+                    noResultsMsg.style.display = 'none';
+                }
+            }
+        });
+
+        // Original code to populate the list
         features.forEach(f => {
             const safeName = fixText(f.properties.name || "District");
             const item = document.createElement('div');
@@ -324,12 +384,26 @@ fetch(wfsUrlPolygons)
                 const geom = new ol.format.GeoJSON().readGeometry(f.geometry);
                 map.getView().fit(geom, { padding: [100, 500, 100, 350], duration: 1000 });
                 showPopupAndHighlight(f.properties, geom, ol.extent.getCenter(geom.getExtent()));
-                clearSearch();
+
+                // Clear search after clicking
+                searchInput.value = '';
+                const districtItems = document.querySelectorAll('.district-item');
+                districtItems.forEach(el => el.style.display = 'block');
             });
             listContainer.appendChild(item);
         });
     })
     .catch(err => listContainer.innerHTML = 'Error loading data.');
+
+
+
+
+
+hospitalSource.on('change', function () {
+    if (hospitalSource.getState() === 'ready') {
+        updateVisibleHospitalCount();
+    }
+});
 
 // COUNT GLOBAL HOSPITALS (ONCE)
 hospitalSource.once('change', function () {
@@ -339,6 +413,33 @@ hospitalSource.once('change', function () {
         document.getElementById('count-hospitals').innerText = count.toLocaleString('en-US');
     }
 });
+
+// Function to update the count based on the current view
+function updateVisibleCount() {
+    const activeDistrict = document.querySelector('.district-item.active');
+    if (activeDistrict) return; // Skip update if a district is active 
+    const extent = map.getView().calculateExtent(map.getSize());
+    const visibleHospitalFeatures = hospitalSource.getFeaturesInExtent(extent);
+    const count = visibleHospitalFeatures.length;
+    document.getElementById('count-hospitals').innerText = count.toLocaleString('en-US');
+
+    highlightSource.getFeaturesInExtent(extent)
+    const peopleEl = document.getElementById('count-people');
+    if (peopleEl && peopleFeature) {
+        let totalPeople = 0;
+        peopleFeature.forEach(f => {
+            const geom = new ol.format.GeoJSON().readGeometry(f.geometry);
+            if (ol.extent.intersects(extent, geom.getExtent())) {
+                totalPeople += f.properties.total_above60 || 0;
+            }
+        });
+        peopleEl.innerText = totalPeople.toLocaleString('en-US');
+    }
+}
+
+
+map.on('moveend', updateVisibleCount);
+
 
 // --- 7. LAYER LOGIC ---
 const boxes = document.querySelectorAll('.viz-cb');
@@ -380,32 +481,38 @@ setTimeout(() => {
 const districtLabel = document.getElementById('district-label');
 const sidebar = document.getElementById('sidebar');
 
+
 districtLabel.addEventListener('click', () => {
     sidebar.classList.toggle('collapsed-districts');
+    // hide search input when collapsed
+
+    const searchContainer = document.querySelector('.search-container');
+    if (searchContainer) {
+        searchContainer.classList.toggle('collapsed-search');
+    }
 });
 
-// --- 10. SEARCH FUNCTIONALITY ---
-const searchInput = document.getElementById('district-search');
 
-searchInput.addEventListener('input', function () {
-    const searchTerm = this.value.toLowerCase().trim();
-    const districtItems = document.querySelectorAll('.district-item');
+// --- 10. INFO MODAL LOGIC ---
 
-    districtItems.forEach(item => {
-        const districtName = item.innerText.toLowerCase();
-        if (districtName.includes(searchTerm)) {
-            item.style.display = 'block';
-        } else {
-            item.style.display = 'none';
-        }
-    });
+var closeModal = document.getElementById('info-modal-closer');
+var infoContainer = document.getElementById('info-icon-container');
+var infoModal = document.getElementById('info-modal');
+
+infoContainer.addEventListener('mouseenter', function () {
+    if (infoModal.style.display == 'block') {
+        infoModal.style.display = 'none';
+    } else {
+        infoModal.style.display = 'block';
+    }
 });
 
-// Clear search when a district is clicked
-function clearSearch() {
-    searchInput.value = '';
-    const districtItems = document.querySelectorAll('.district-item');
-    districtItems.forEach(item => {
-        item.style.display = 'block';
-    });
-}
+infoContainer.addEventListener('mouseleave', function () {
+    infoModal.style.display = 'none';
+});
+
+
+closeModal.addEventListener('click', function () {
+    var infoModal = document.getElementById('info-modal');
+    infoModal.style.display = 'none';
+});
